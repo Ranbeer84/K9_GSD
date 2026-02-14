@@ -1,0 +1,29 @@
+# --- System Files ---
+.DS_Store
+.vscode/
+__pycache__/
+*.py[cod]
+
+# --- Backend Specifics ---
+backend/.env
+backend/venv/
+backend/__pycache__/
+backend/uploads/dogs/*
+backend/uploads/puppies/*
+backend/uploads/gallery/*
+
+# --- Frontend Specifics ---
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/public/dogs/*
+frontend/public/puppies/*
+
+# --- Exceptions (Keep these UI images) ---
+!frontend/public/dogs/About.jpg
+!frontend/public/dogs/Home.jpg
+
+# --- General ---
+node_modules/
+*.log
