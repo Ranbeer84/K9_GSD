@@ -1,18 +1,178 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Camera } from "lucide-react";
-import { galleryImages } from "../data/galleryImages";
+import { X, Camera, Loader, AlertCircle } from "lucide-react";
+import { galleryAPI, handleAPIError } from "../api/api";
 
 const Gallery = () => {
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Responsive check
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 992);
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Fetch gallery items from backend
+  useEffect(() => {
+    fetchGallery();
+  }, []);
+
+  const fetchGallery = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await galleryAPI.getAll(); // Calls /api/gallery
+      console.log("Gallery API Response:", data);
+      setGalleryItems(data.items || []);
+    } catch (err) {
+      console.error("Error fetching gallery:", err);
+      setError(handleAPIError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Group items by category
+  const groupedItems = galleryItems.reduce((acc, item) => {
+    const category = item.category || "General";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(item);
+    return acc;
+  }, {});
+
+  // Get first image from each category for thumbnail
+  const categoryThumbnails = Object.keys(groupedItems).map((category) => ({
+    category,
+    thumbnail: groupedItems[category][0],
+    items: groupedItems[category],
+  }));
+
+  // Loading state
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: "100px",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <Loader
+            size={48}
+            style={{
+              animation: "spin 1s linear infinite",
+              color: "var(--primary-from)",
+            }}
+          />
+          <p
+            style={{
+              marginTop: "20px",
+              color: "var(--text-secondary)",
+              fontSize: "1.1rem",
+            }}
+          >
+            Loading gallery...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: "100px",
+        }}
+      >
+        <div
+          style={{
+            textAlign: "center",
+            padding: "40px",
+            maxWidth: "500px",
+          }}
+        >
+          <AlertCircle size={48} color="#ef4444" style={{ margin: "0 auto" }} />
+          <p
+            style={{
+              color: "#ef4444",
+              fontSize: "1.2rem",
+              marginTop: "20px",
+              marginBottom: "20px",
+            }}
+          >
+            {error}
+          </p>
+          <button
+            onClick={fetchGallery}
+            style={{
+              padding: "12px 24px",
+              background: "var(--primary-from)",
+              color: "#000",
+              border: "none",
+              borderRadius: "12px",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (galleryItems.length === 0) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: "100px",
+        }}
+      >
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <Camera
+            size={64}
+            color="var(--text-muted)"
+            style={{ margin: "0 auto" }}
+          />
+          <h2
+            style={{
+              color: "var(--text-primary)",
+              fontSize: "2rem",
+              marginTop: "20px",
+              marginBottom: "10px",
+            }}
+          >
+            No Gallery Items Yet
+          </h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "1.1rem" }}>
+            Check back soon for photos and videos from our kennel!
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -23,7 +183,7 @@ const Gallery = () => {
       }}
     >
       <div className="container section-padding">
-        {/* Header - Simple Animation */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -79,10 +239,10 @@ const Gallery = () => {
           </p>
         </motion.div>
 
-        {/* Gallery Collections */}
+        {/* Gallery Collections by Category */}
         <div style={{ display: "flex", flexDirection: "column", gap: "80px" }}>
-          {galleryImages.map((dog, index) => (
-            <div key={dog.id}>
+          {categoryThumbnails.map((categoryData, index) => (
+            <div key={categoryData.category}>
               {/* Category Title */}
               <motion.h2
                 initial={{ opacity: 0 }}
@@ -98,7 +258,10 @@ const Gallery = () => {
                   gap: "15px",
                 }}
               >
-                <span className="gradient-text">{dog.caption}</span>
+                <span className="gradient-text">
+                  {categoryData.category.charAt(0).toUpperCase() +
+                    categoryData.category.slice(1)}
+                </span>
                 <div
                   style={{
                     flex: 1,
@@ -118,7 +281,7 @@ const Gallery = () => {
                   alignItems: "start",
                 }}
               >
-                {/* Main Thumbnail - Optimized */}
+                {/* Main Thumbnail */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   whileInView={{ opacity: 1, scale: 1 }}
@@ -132,7 +295,9 @@ const Gallery = () => {
                     borderRadius: "24px",
                     border: "2px solid rgba(16, 185, 129, 0.3)",
                   }}
-                  onClick={() => setSelectedImage(dog.thumbnail)}
+                  onClick={() =>
+                    setSelectedImage(categoryData.thumbnail.media_url)
+                  }
                 >
                   <div
                     style={{
@@ -142,16 +307,39 @@ const Gallery = () => {
                       overflow: "hidden",
                     }}
                   >
-                    <img
-                      src={dog.thumbnail}
-                      alt={dog.caption}
-                      loading="lazy" // Crucial for performance
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
+                    {categoryData.thumbnail.media_type === "image" ? (
+                      <img
+                        src={categoryData.thumbnail.media_url}
+                        alt={
+                          categoryData.thumbnail.title || categoryData.category
+                        }
+                        loading="lazy"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                          console.error(
+                            "Failed to load image:",
+                            categoryData.thumbnail.media_url,
+                          );
+                        }}
+                      />
+                    ) : (
+                      <video
+                        src={categoryData.thumbnail.media_url}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                        muted
+                        loop
+                        playsInline
+                      />
+                    )}
                   </div>
                 </motion.div>
 
@@ -164,13 +352,13 @@ const Gallery = () => {
                     gap: "20px",
                   }}
                 >
-                  {dog.collection.map((imgUrl, imgIndex) => (
+                  {categoryData.items.map((item, imgIndex) => (
                     <motion.div
-                      key={imgIndex}
+                      key={item.id}
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true, margin: "50px" }}
-                      transition={{ delay: (imgIndex % 4) * 0.05 }} // Staggered but limited
+                      transition={{ delay: (imgIndex % 4) * 0.05 }}
                       whileHover={{ y: -6 }}
                       className="glass-card"
                       style={{
@@ -180,25 +368,86 @@ const Gallery = () => {
                         padding: "8px",
                         borderRadius: "16px",
                       }}
-                      onClick={() => setSelectedImage(imgUrl)}
+                      onClick={() =>
+                        item.media_type === "image" &&
+                        setSelectedImage(item.media_url)
+                      }
                     >
                       <div
                         style={{
                           height: "100%",
                           borderRadius: "12px",
                           overflow: "hidden",
+                          position: "relative",
                         }}
                       >
-                        <img
-                          src={imgUrl}
-                          alt={`${dog.caption} ${imgIndex}`}
-                          loading="lazy" // Browsers will only load this when user scrolls near
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
+                        {item.media_type === "image" ? (
+                          <img
+                            src={item.media_url}
+                            alt={
+                              item.title ||
+                              `${categoryData.category} ${imgIndex}`
+                            }
+                            loading="lazy"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              console.error(
+                                "Failed to load image:",
+                                item.media_url,
+                              );
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              position: "relative",
+                              background: "rgba(0,0,0,0.3)",
+                            }}
+                          >
+                            <video
+                              src={item.media_url}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                              muted
+                              loop
+                              playsInline
+                            />
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "50%",
+                                transform: "translate(-50%, -50%)",
+                                width: "40px",
+                                height: "40px",
+                                background: "rgba(255,255,255,0.9)",
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                              >
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   ))}
@@ -254,10 +503,25 @@ const Gallery = () => {
                 borderRadius: "12px",
                 border: "1px solid rgba(255,255,255,0.1)",
               }}
+              onError={(e) => {
+                console.error("Failed to load full-size image:", selectedImage);
+              }}
             />
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Spinner animation */}
+      <style>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 };

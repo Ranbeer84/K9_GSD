@@ -2,7 +2,6 @@
 Configuration settings for Flask application
 Loads environment variables from .env file
 """
-
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -19,15 +18,14 @@ class Config:
     
     # Database settings
     DB_USER = os.getenv('DB_USER', 'kennel_admin')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', 'strongpassword')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'kennel123')  # UPDATED to match
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_PORT = os.getenv('DB_PORT', '5432')
-    DB_NAME = os.getenv('DB_NAME', 'k9_kennel_db')
+    DB_NAME = os.getenv('DB_NAME', 'k9_gsd_kennel')  # UPDATED to match actual DB
     
     SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # SQLALCHEMY_ECHO = DEBUG  # Log SQL queries in debug mode
-    SQLALCHEMY_ECHO = False  # Keep it short and clean
+    SQLALCHEMY_ECHO = False  # Keep it clean
     
     # JWT settings
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
@@ -55,24 +53,20 @@ class Config:
     # Pagination
     ITEMS_PER_PAGE = 12
 
-
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
     SQLALCHEMY_ECHO = False
-
 
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     SQLALCHEMY_ECHO = False
 
-
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-
 
 # Configuration dictionary
 config = {

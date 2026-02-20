@@ -46,7 +46,7 @@ def create_app(config_class=Config):
     @app.route('/uploads/<path:filename>')
     def serve_upload(filename):
         """Serve uploaded images/videos"""
-        upload_folder = app.config['UPLOAD_FOLDER']
+        upload_folder = os.path.abspath(app.config['UPLOAD_FOLDER'])
         return send_from_directory(upload_folder, filename)
     
     # ============================================

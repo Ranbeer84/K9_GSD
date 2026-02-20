@@ -1,14 +1,171 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Heart, Award, Info } from "lucide-react"; // Using icons already in your project
-import { parentDogs } from "../data/parentDogs";
+import { Shield, Heart, Award, Loader } from "lucide-react";
+import { dogsAPI, getImageURL } from "../api/api";
 
 const OurDogs = () => {
+  const [dogs, setDogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [hoveredId, setHoveredId] = useState(null);
 
   // Responsive check
   const isMobile =
     typeof window !== "undefined" ? window.innerWidth <= 768 : false;
+
+  // Fetch dogs from backend on component mount
+  useEffect(() => {
+    fetchDogs();
+  }, []);
+
+  const fetchDogs = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const response = await dogsAPI.getAll(); // Calls /api/dogs
+      console.log("Dogs API Response:", response); // Debug log
+      setDogs(response.dogs || []); // Backend returns { dogs: [...], count: N }
+    } catch (err) {
+      console.error("Error fetching dogs:", err);
+      setError("Failed to load our dogs. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate age from date_of_birth
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return "Age not available";
+
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    if (years === 0) {
+      return `${months} ${months === 1 ? "month" : "months"}`;
+    } else if (months === 0) {
+      return `${years} ${years === 1 ? "year" : "years"}`;
+    } else {
+      return `${years}y ${months}m`;
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: "100px",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <Loader
+            size={48}
+            style={{
+              animation: "spin 1s linear infinite",
+              color: "var(--primary-from)",
+            }}
+          />
+          <p
+            style={{
+              marginTop: "20px",
+              color: "var(--text-secondary)",
+              fontSize: "1.1rem",
+            }}
+          >
+            Loading our champion dogs...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: "100px",
+        }}
+      >
+        <div
+          style={{
+            textAlign: "center",
+            padding: "40px",
+            maxWidth: "500px",
+          }}
+        >
+          <p
+            style={{
+              color: "#ef4444",
+              fontSize: "1.2rem",
+              marginBottom: "20px",
+            }}
+          >
+            {error}
+          </p>
+          <button
+            onClick={fetchDogs}
+            style={{
+              padding: "12px 24px",
+              background: "var(--primary-from)",
+              color: "#000",
+              border: "none",
+              borderRadius: "12px",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (dogs.length === 0) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: "100px",
+        }}
+      >
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <h2
+            style={{
+              color: "var(--text-primary)",
+              fontSize: "2rem",
+              marginBottom: "10px",
+            }}
+          >
+            No Dogs Available
+          </h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "1.1rem" }}>
+            We haven't added any parent dogs yet. Check back soon!
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -57,7 +214,7 @@ const OurDogs = () => {
             gap: "40px",
           }}
         >
-          {parentDogs.map((dog, index) => (
+          {dogs.map((dog, index) => (
             <motion.div
               key={dog.id}
               initial={{ opacity: 0, y: 30 }}
@@ -83,35 +240,54 @@ const OurDogs = () => {
                   position: "relative",
                   height: "400px",
                   overflow: "hidden",
+                  background: "rgba(255,255,255,0.03)",
                 }}
               >
-                <motion.img
-                  animate={{ scale: hoveredId === dog.id ? 1.1 : 1 }}
-                  transition={{ duration: 0.6 }}
-                  src={dog.image}
-                  alt={dog.name}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
+                {dog.primary_image ? (
+                  <motion.img
+                    animate={{ scale: hoveredId === dog.id ? 1.1 : 1 }}
+                    transition={{ duration: 0.6 }}
+                    src={getImageURL(dog.primary_image)}
+                    alt={dog.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    No Image
+                  </div>
+                )}
                 <div
                   style={{
                     position: "absolute",
                     top: "20px",
                     left: "20px",
                     padding: "8px 20px",
-                    background: "var(--primary-from)", // Emerald from your CSS
+                    background: "var(--primary-from)",
                     borderRadius: "50px",
                     fontSize: "0.8rem",
                     fontWeight: "800",
-                    color: "#000", // High contrast
+                    color: "#000",
                     textTransform: "uppercase",
                     letterSpacing: "1px",
                   }}
                 >
-                  {dog.type}
+                  {dog.role}
                 </div>
               </div>
 
@@ -136,15 +312,17 @@ const OurDogs = () => {
                     >
                       {dog.name}
                     </h3>
-                    <span
-                      style={{
-                        color: "var(--primary-from)",
-                        fontWeight: "bold",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      {dog.bloodline}
-                    </span>
+                    {dog.registration_number && (
+                      <span
+                        style={{
+                          color: "var(--primary-from)",
+                          fontWeight: "bold",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        {dog.registration_number}
+                      </span>
+                    )}
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <p
@@ -165,25 +343,39 @@ const OurDogs = () => {
                         margin: 0,
                       }}
                     >
-                      {dog.age}
+                      {calculateAge(dog.date_of_birth)}
                     </p>
                   </div>
                 </div>
 
-                {/* Stats Grid */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "12px",
-                    marginBottom: "24px",
-                  }}
-                >
+                {/* Description */}
+                {dog.description && (
                   <div
                     style={{
+                      marginBottom: "24px",
+                      padding: "16px",
                       background: "rgba(255,255,255,0.03)",
-                      padding: "12px",
                       borderRadius: "12px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "0.95rem",
+                        color: "var(--text-secondary)",
+                        lineHeight: "1.6",
+                      }}
+                    >
+                      {dog.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Pedigree Info */}
+                {dog.pedigree_info && (
+                  <div
+                    style={{
+                      marginBottom: "24px",
                     }}
                   >
                     <div
@@ -191,18 +383,19 @@ const OurDogs = () => {
                         display: "flex",
                         alignItems: "center",
                         gap: "6px",
-                        marginBottom: "4px",
+                        marginBottom: "8px",
                       }}
                     >
-                      <Heart size={14} color="var(--primary-from)" />
+                      <Award size={16} color="var(--primary-from)" />
                       <span
                         style={{
-                          fontSize: "0.7rem",
+                          fontSize: "0.75rem",
                           color: "var(--text-muted)",
                           fontWeight: "bold",
+                          letterSpacing: "1px",
                         }}
                       >
-                        TEMPERAMENT
+                        PEDIGREE
                       </span>
                     </div>
                     <p
@@ -210,16 +403,19 @@ const OurDogs = () => {
                         margin: 0,
                         fontSize: "0.9rem",
                         color: "var(--text-secondary)",
+                        lineHeight: "1.5",
                       }}
                     >
-                      {dog.temperament}
+                      {dog.pedigree_info}
                     </p>
                   </div>
+                )}
+
+                {/* Achievements */}
+                {dog.achievements && (
                   <div
                     style={{
-                      background: "rgba(255,255,255,0.03)",
-                      padding: "12px",
-                      borderRadius: "12px",
+                      marginBottom: "24px",
                     }}
                   >
                     <div
@@ -227,18 +423,19 @@ const OurDogs = () => {
                         display: "flex",
                         alignItems: "center",
                         gap: "6px",
-                        marginBottom: "4px",
+                        marginBottom: "8px",
                       }}
                     >
-                      <Award size={14} color="var(--primary-from)" />
+                      <Award size={16} color="var(--primary-from)" />
                       <span
                         style={{
-                          fontSize: "0.7rem",
+                          fontSize: "0.75rem",
                           color: "var(--text-muted)",
                           fontWeight: "bold",
+                          letterSpacing: "1px",
                         }}
                       >
-                        TRAINING
+                        ACHIEVEMENTS
                       </span>
                     </div>
                     <p
@@ -246,54 +443,75 @@ const OurDogs = () => {
                         margin: 0,
                         fontSize: "0.9rem",
                         color: "var(--text-secondary)",
+                        lineHeight: "1.5",
                       }}
                     >
-                      {dog.training}
+                      {dog.achievements}
                     </p>
                   </div>
-                </div>
+                )}
 
-                {/* Health Footer */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "16px",
-                    background: "rgba(16, 185, 129, 0.05)",
-                    borderRadius: "16px",
-                    border: "1px solid rgba(16, 185, 129, 0.1)",
-                  }}
-                >
-                  <Shield size={20} color="var(--primary-from)" />
-                  <div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "0.7rem",
-                        color: "var(--primary-from)",
-                        fontWeight: "bold",
-                        letterSpacing: "1px",
-                      }}
-                    >
-                      HEALTH CLEARANCE
-                    </p>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "0.9rem",
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      {dog.health}
-                    </p>
+                {/* Health Clearances */}
+                {dog.health_clearances && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "12px",
+                      padding: "16px",
+                      background: "rgba(16, 185, 129, 0.05)",
+                      borderRadius: "16px",
+                      border: "1px solid rgba(16, 185, 129, 0.1)",
+                    }}
+                  >
+                    <Shield
+                      size={20}
+                      color="var(--primary-from)"
+                      style={{ flexShrink: 0, marginTop: "2px" }}
+                    />
+                    <div>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "0.7rem",
+                          color: "var(--primary-from)",
+                          fontWeight: "bold",
+                          letterSpacing: "1px",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        HEALTH CLEARANCE
+                      </p>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "0.9rem",
+                          color: "var(--text-primary)",
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        {dog.health_clearances}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </motion.div>
           ))}
         </div>
       </div>
+
+      {/* Add spinner animation */}
+      <style>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 };
