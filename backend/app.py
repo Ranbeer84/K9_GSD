@@ -57,12 +57,14 @@ def create_app(config_class=Config):
     from routes.puppy_routes import puppy_bp
     from routes.gallery_routes import gallery_bp
     from routes.booking_routes import booking_bp
+    from routes.dashboard_routes import dashboard_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(dog_bp, url_prefix='/api/dogs')
     app.register_blueprint(puppy_bp, url_prefix='/api/puppies')
     app.register_blueprint(gallery_bp, url_prefix='/api/gallery')
     app.register_blueprint(booking_bp, url_prefix='/api/bookings')
+    app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
     
     # ============================================
     # Health check endpoint
