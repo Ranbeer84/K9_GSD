@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -7,42 +7,75 @@ import {
   Camera,
   Phone,
   BarChart3,
-  TrendingUp,
   Settings,
   ShieldCheck,
   ChevronRight,
   ArrowUpRight,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
+import api from "../api/api";
 
 const Dashboard = () => {
+  const [statsData, setStatsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get("/dashboard/stats");
+      setStatsData(response.data.stats);
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats:", err);
+      setError("Could not load stats. Check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  // Build stats array from live data, fall back to "—" while loading
   const stats = [
     {
       label: "Active Puppies",
-      value: "12",
+      value: statsData
+        ? String(statsData.active_puppies.count).padStart(2, "0")
+        : "—",
       icon: Heart,
       color: "var(--primary-from)",
-      trend: "+2 this week",
+      trend: statsData?.active_puppies.trend ?? "Loading...",
     },
     {
       label: "Parent Lineage",
-      value: "06",
+      value: statsData
+        ? String(statsData.parent_lineage.count).padStart(2, "0")
+        : "—",
       icon: Award,
       color: "var(--secondary-from)",
-      trend: "Verified",
+      trend: statsData?.parent_lineage.trend ?? "Loading...",
     },
     {
       label: "Media Assets",
-      value: "48",
+      value: statsData
+        ? String(statsData.media_assets.count).padStart(2, "0")
+        : "—",
       icon: Camera,
       color: "var(--primary-from)",
-      trend: "High Res",
+      trend: statsData?.media_assets.trend ?? "Loading...",
     },
     {
       label: "New Inquiries",
-      value: "05",
+      value: statsData
+        ? String(statsData.new_inquiries.count).padStart(2, "0")
+        : "—",
       icon: Phone,
       color: "var(--secondary-from)",
-      trend: "Action Required",
+      trend: statsData?.new_inquiries.trend ?? "Loading...",
     },
   ];
 
@@ -139,7 +172,34 @@ const Dashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
+            style={{ display: "flex", gap: "12px" }}
           >
+            {/* Refresh button */}
+            <button
+              onClick={fetchStats}
+              disabled={loading}
+              style={{
+                padding: "12px 20px",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "12px",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.6 : 1,
+              }}
+            >
+              <RefreshCw
+                size={16}
+                style={{
+                  animation: loading ? "spin 1s linear infinite" : "none",
+                }}
+              />
+              {loading ? "Refreshing..." : "Refresh"}
+            </button>
+
             <button
               style={{
                 padding: "12px 24px",
@@ -157,6 +217,44 @@ const Dashboard = () => {
             </button>
           </motion.div>
         </div>
+
+        {/* --- ERROR STATE --- */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              marginBottom: "30px",
+              padding: "16px 24px",
+              background: "rgba(239, 68, 68, 0.08)",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+              borderRadius: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              color: "#fca5a5",
+            }}
+          >
+            <AlertCircle size={20} />
+            <span style={{ fontSize: "0.9rem" }}>{error}</span>
+            <button
+              onClick={fetchStats}
+              style={{
+                marginLeft: "auto",
+                padding: "6px 14px",
+                background: "rgba(239, 68, 68, 0.15)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                borderRadius: "8px",
+                color: "#fca5a5",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+                fontWeight: "700",
+              }}
+            >
+              Retry
+            </button>
+          </motion.div>
+        )}
 
         {/* --- STATS OVERVIEW --- */}
         <div
@@ -181,6 +279,7 @@ const Dashboard = () => {
                 overflow: "hidden",
               }}
             >
+              {/* Glow accent */}
               <div
                 style={{
                   position: "absolute",
@@ -214,22 +313,29 @@ const Dashboard = () => {
                     fontSize: "0.7rem",
                     fontWeight: "800",
                     textTransform: "uppercase",
+                    textAlign: "right",
+                    maxWidth: "130px",
+                    lineHeight: 1.4,
                   }}
                 >
                   {stat.trend}
                 </span>
               </div>
+
+              {/* Value — pulse while loading */}
               <h3
                 style={{
                   fontSize: "3rem",
                   fontWeight: "900",
-                  color: "#fff",
+                  color: loading ? "rgba(255,255,255,0.2)" : "#fff",
                   margin: "0 0 4px 0",
                   letterSpacing: "-2px",
+                  transition: "color 0.3s",
                 }}
               >
                 {stat.value}
               </h3>
+
               <p
                 style={{
                   color: "var(--text-muted)",
@@ -385,6 +491,14 @@ const Dashboard = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Spin animation for refresh icon */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
