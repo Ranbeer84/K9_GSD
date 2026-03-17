@@ -15,6 +15,7 @@ import Dashboard from "../admin/Dashboard";
 import ManagePuppies from "../admin/ManagePuppies";
 import ManageDogs from "../admin/ManageDogs";
 import ManageGallery from "../admin/ManageGallery";
+import ManageBookings from "../admin/ManageBookings";
 
 const AppRoutes = ({ isAdmin, onLogin }) => {
   console.log("AppRoutes - isAdmin:", isAdmin);
@@ -81,7 +82,7 @@ const AppRoutes = ({ isAdmin, onLogin }) => {
       />
 
       {/* Manage Bookings Placeholder */}
-      <Route
+      {/* <Route
         path="/admin/bookings"
         element={
           isAdmin ? (
@@ -94,6 +95,13 @@ const AppRoutes = ({ isAdmin, onLogin }) => {
           ) : (
             <Navigate to="/login" replace />
           )
+        }
+      /> */}
+
+      <Route
+        path="/admin/bookings"
+        element={
+          isAdmin ? <ManageBookings /> : <Navigate to="/login" replace />
         }
       />
 
