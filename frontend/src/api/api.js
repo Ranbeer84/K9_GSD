@@ -9,6 +9,9 @@ import axios from "axios";
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5002/api";
 
+// Separate base for file URLs (no /api suffix)
+const FILE_BASE_URL = import.meta.env.VITE_FILE_URL || "http://localhost:5002";
+
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -17,6 +20,10 @@ const api = axios.create({
   },
   timeout: 30000, // 30 seconds
 });
+
+// ============================================
+// INTERCEPTORS
+// ============================================
 
 // Request interceptor - add auth token if exists
 api.interceptors.request.use(
@@ -27,9 +34,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor - handle errors globally
@@ -37,7 +42,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
       localStorage.removeItem("admin_token");
       window.location.href = "/login";
     }
@@ -76,11 +80,21 @@ export const authAPI = {
 };
 
 // ============================================
+// DASHBOARD API
+// ============================================
+
+export const dashboardAPI = {
+  getStats: async () => {
+    const response = await api.get("/dashboard/stats");
+    return response.data;
+  },
+};
+
+// ============================================
 // PUPPIES API
 // ============================================
 
 export const puppiesAPI = {
-  // Public endpoints
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.status) params.append("status", filters.status);
@@ -96,7 +110,6 @@ export const puppiesAPI = {
     return response.data;
   },
 
-  // Admin endpoints
   create: async (formData) => {
     const response = await api.post("/puppies/admin", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -137,25 +150,23 @@ export const puppiesAPI = {
 // ============================================
 
 export const dogsAPI = {
-  // Public endpoints
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.role) params.append("role", filters.role);
     if (filters.gender) params.append("gender", filters.gender);
 
     const response = await api.get(`/dogs?${params}`);
-    return response.data; // Backend returns { dogs: [...], count: N }
+    return response.data;
   },
 
   getOne: async (id) => {
     const response = await api.get(`/dogs/${id}`);
-    return response.data; // Returns single dog object
+    return response.data;
   },
 
-  // Admin endpoints
   getAllAdmin: async () => {
     const response = await api.get("/dogs/admin");
-    return response.data; // Returns { dogs: [...], count: N }
+    return response.data;
   },
 
   create: async (formData) => {
@@ -198,7 +209,6 @@ export const dogsAPI = {
 // ============================================
 
 export const galleryAPI = {
-  // Public endpoints
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.category) params.append("category", filters.category);
@@ -213,7 +223,6 @@ export const galleryAPI = {
     return response.data;
   },
 
-  // Admin endpoints
   getAllAdmin: async () => {
     const response = await api.get("/gallery/admin");
     return response.data;
@@ -233,11 +242,9 @@ export const galleryAPI = {
     return response.data;
   },
 
-  // UPDATED: Now supports passing either a raw files array or prepared formData
   bulkUpload: async (payload, category = "General") => {
     let body = payload;
 
-    // If payload isn't already FormData, create it
     if (!(payload instanceof FormData)) {
       body = new FormData();
       payload.forEach((file) => body.append("files", file));
@@ -285,41 +292,36 @@ export const bookingsAPI = {
   },
 };
 
-// ... existing API objects (authAPI, dogsAPI, galleryAPI, etc.)
-
 // ============================================
-// UTILITY FUNCTIONS - ADD THESE AT THE BOTTOM
+// UTILITY FUNCTIONS
 // ============================================
 
+/**
+ * Convert a relative image path to a full URL.
+ * Uses FILE_BASE_URL (no /api suffix) since uploads
+ * are served at /uploads/<path>, not /api/uploads/<path>.
+ */
 export const getImageURL = (imagePath) => {
   if (!imagePath) return null;
-
-  // If it's already a full URL, return as-is
   if (imagePath.startsWith("http")) return imagePath;
 
-  // Otherwise, construct URL from backend
-  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5002";
-
-  // Ensure we don't double up on slashes
   const cleanPath = imagePath.startsWith("/")
     ? imagePath.substring(1)
     : imagePath;
-  return `${baseURL}/uploads/${cleanPath}`;
+
+  return `${FILE_BASE_URL}/uploads/${cleanPath}`;
 };
 
+/**
+ * Extract a human-readable error message from an Axios error.
+ */
 export const handleAPIError = (error) => {
   if (error.response) {
-    // Server responded with error
     return error.response.data?.error || "An error occurred";
   } else if (error.request) {
-    // Request made but no response
     return "No response from server. Please check your connection.";
-  } else {
-    // Something else went wrong
-    return error.message || "An unexpected error occurred";
   }
+  return error.message || "An unexpected error occurred";
 };
-
-// Ensure your default export is still here
 
 export default api;
