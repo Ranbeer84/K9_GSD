@@ -58,7 +58,7 @@ def init_database():
                 email='admin@k9kennel.com',
                 full_name='K9 Kennel Admin',
                 # CALL THE IMPORTED SERVICE FUNCTION HERE
-                password_hash = hash_password('admin123') 
+                password_hash = hash_password(os.getenv('ADMIN_PASSWORD', 'admin123'))
             )
             
             db.session.add(admin)
@@ -66,7 +66,7 @@ def init_database():
             
             print("✅ Admin user created")
             print(f"   Username: admin")
-            print(f"   Password: admin123")
+            print("   Password: (from ADMIN_PASSWORD in .env, default admin123 if unset)")
             print(f"   ⚠️  CHANGE THIS PASSWORD IN PRODUCTION!\n")
         else:
             print("ℹ️  Admin user already exists\n")

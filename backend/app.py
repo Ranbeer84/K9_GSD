@@ -19,10 +19,10 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     
     # ============================================
-    # CORS Configuration - FIXED
+    # CORS Configuration (origins come from CORS_ORIGINS in .env)
     # ============================================
     CORS(app, 
-         resources={r"/api/*": {"origins": "*"}},
+         resources={r"/api/*": {"origins": app.config['CORS_ORIGINS']}},
          allow_headers=["Content-Type", "Authorization"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
          supports_credentials=True
@@ -129,6 +129,6 @@ if __name__ == '__main__':
     app.run(
         host='0.0.0.0', 
         port=5002, 
-        debug=True, 
+        debug=app.config['DEBUG'],
         use_reloader=False
     )

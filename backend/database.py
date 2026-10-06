@@ -1,8 +1,9 @@
 """
-Database initialization and configuration - FIXED VERSION
+Database initialization and configuration
 SQLAlchemy setup for PostgreSQL
 """
 import logging
+import os
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 
@@ -54,7 +55,14 @@ def init_db(app):
                     full_name='System Administrator',
                     is_active=True
                 )
-                default_admin.set_password('admin123')
+                admin_password = os.getenv('ADMIN_PASSWORD')
+                if not admin_password:
+                    admin_password = 'admin123'
+                    logger.warning(
+                        "ADMIN_PASSWORD is not set - using the insecure default. "
+                        "Set ADMIN_PASSWORD in .env before deploying!"
+                    )
+                default_admin.set_password(admin_password)
                 
                 db.session.add(default_admin)
                 db.session.commit()
@@ -63,10 +71,9 @@ def init_db(app):
                 logger.info("✅ DEFAULT ADMIN CREATED SUCCESSFULLY")
                 logger.info("=" * 60)
                 logger.info("   Username: admin")
-                logger.info("   Password: admin123")
                 logger.info("   Email: admin@k9kennel.com")
                 logger.info("=" * 60)
-                logger.info("⚠️  IMPORTANT: Change this password after first login!")
+                logger.info("   Password: (from ADMIN_PASSWORD in .env)")
                 logger.info("=" * 60)
             else:
                 logger.info(f"ℹ️  Admin user '{admin.username}' already exists")

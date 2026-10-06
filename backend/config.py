@@ -14,7 +14,7 @@ class Config:
     
     # Flask settings
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-    DEBUG = os.getenv('DEBUG', 'True') == 'True'
+    DEBUG = os.getenv('DEBUG', 'False') == 'True'  # off unless DEBUG=True is set in .env
     
     # Database settings
     DB_USER = os.getenv('DB_USER', 'kennel_admin')
