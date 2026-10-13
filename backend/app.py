@@ -17,6 +17,13 @@ def create_app(config_class=Config):
     """Application factory pattern"""
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Behind Render's proxy: trust X-Forwarded-* so redirects/URLs use https
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+    # /api/dogs and /api/dogs/ both work (no 308 redirect, which breaks cross-origin calls)
+    app.url_map.strict_slashes = False
     
     # ============================================
     # CORS Configuration (origins come from CORS_ORIGINS in .env)
