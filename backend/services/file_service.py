@@ -1,156 +1,142 @@
 """
 File Upload Service
-Handles image and video uploads with validation and storage
+
+Production: if CLOUDINARY_URL is set, files go to Cloudinary and the database
+stores the full https URL (the models and the frontend already pass full URLs through).
+Local dev: if CLOUDINARY_URL is NOT set, files are saved to backend/uploads/ as before.
 """
 
 import os
-from werkzeug.utils import secure_filename
+import re
 from flask import current_app
 from utils.validators import allowed_file, sanitize_filename
 from PIL import Image
 
+IMAGE_EXTS = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
+
+
+def _cloud_enabled():
+    return bool(os.getenv('CLOUDINARY_URL'))
+
 
 def save_uploaded_file(file, folder='general'):
     """
-    Save uploaded file to designated folder
-    
-    Args:
-        file: FileStorage object from request.files
-        folder: Subfolder name ('dogs', 'puppies', 'gallery')
-        
+    Save an uploaded file.
+
     Returns:
-        tuple: (success: bool, filepath or error: str)
+        tuple: (success: bool, value: str)
+        value = full https URL (Cloudinary) or relative path (local) on success,
+        or an error message on failure.
     """
     if not file:
         return False, 'No file provided'
-    
+
     if file.filename == '':
         return False, 'No file selected'
-    
-    # Determine file type
-    file_type = 'image' if any(file.filename.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']) else 'video'
-    
-    # Validate file type
+
+    file_type = 'image' if file.filename.lower().endswith(IMAGE_EXTS) else 'video'
+
     if not allowed_file(file.filename, file_type):
         return False, f'File type not allowed. Allowed types: {current_app.config.get(f"ALLOWED_{file_type.upper()}_EXTENSIONS")}'
-    
-    # Sanitize filename
+
+    # ---------- Cloudinary ----------
+    if _cloud_enabled():
+        try:
+            import cloudinary.uploader
+            options = {
+                'folder': f'k9gsd/{folder}',
+                'resource_type': 'video' if file_type == 'video' else 'image',
+            }
+            if file_type == 'image':
+                # Replaces optimize_image(): shrink to 1920px wide, auto quality
+                options['transformation'] = [{'width': 1920, 'crop': 'limit', 'quality': 'auto'}]
+            result = cloudinary.uploader.upload(file.stream, **options)
+            return True, result['secure_url']
+        except Exception as e:
+            return False, f'Error uploading file: {str(e)}'
+
+    # ---------- Local disk (development) ----------
     safe_filename = sanitize_filename(file.filename)
-    
-    # Construct full path
     upload_folder = current_app.config['UPLOAD_FOLDER']
     folder_path = os.path.join(upload_folder, folder)
-    
-    # Ensure directory exists
     os.makedirs(folder_path, exist_ok=True)
-    
-    # Full file path
     file_path = os.path.join(folder_path, safe_filename)
-    
+
     try:
-        # Save file
         file.save(file_path)
-        
-        # If image, create thumbnail (optional optimization)
         if file_type == 'image':
             optimize_image(file_path)
-        
-        # Return relative path for database storage
-        relative_path = os.path.join(folder, safe_filename)
-        return True, relative_path
-    
+        return True, os.path.join(folder, safe_filename)
     except Exception as e:
         return False, f'Error saving file: {str(e)}'
 
 
 def optimize_image(file_path, max_width=1920, quality=85):
-    """
-    Optimize uploaded image (resize if too large, compress)
-    
-    Args:
-        file_path: Full path to image file
-        max_width: Maximum width in pixels
-        quality: JPEG quality (1-100)
-    """
+    """Resize/compress a local image (development only)."""
     try:
         with Image.open(file_path) as img:
-            # Convert RGBA to RGB if needed (for JPEG)
             if img.mode in ('RGBA', 'LA', 'P'):
                 background = Image.new('RGB', img.size, (255, 255, 255))
                 if img.mode == 'P':
                     img = img.convert('RGBA')
                 background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
                 img = background
-            
-            # Resize if too large
+
             if img.width > max_width:
                 ratio = max_width / img.width
-                new_height = int(img.height * ratio)
-                img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
-            
-            # Save optimized version
+                img = img.resize((max_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
+
             img.save(file_path, optimize=True, quality=quality)
-    
+
     except Exception as e:
-        # If optimization fails, keep original file
         print(f"Warning: Could not optimize image {file_path}: {str(e)}")
+
+
+_CLOUDINARY_URL_RE = re.compile(r'/(image|video)/upload/(?:v\d+/)?(.+)\.[A-Za-z0-9]+$')
 
 
 def delete_file(filepath):
     """
-    Delete file from filesystem
-    
-    Args:
-        filepath: Relative path to file (e.g., 'puppies/image.jpg')
-        
-    Returns:
-        bool: True if deleted, False if error
+    Delete a file.
+    Accepts a Cloudinary URL (production) or a relative local path (development).
+    Returns True if deleted, False otherwise.
     """
     try:
+        if not filepath:
+            return False
+
+        # Cloudinary URL
+        if filepath.startswith('http'):
+            if not _cloud_enabled():
+                return False
+            match = _CLOUDINARY_URL_RE.search(filepath.split('?')[0])
+            if not match:
+                return False
+            import cloudinary.uploader
+            resource_type, public_id = match.group(1), match.group(2)
+            result = cloudinary.uploader.destroy(public_id, resource_type=resource_type)
+            return result.get('result') == 'ok'
+
+        # Local file
         upload_folder = current_app.config['UPLOAD_FOLDER']
         full_path = os.path.join(upload_folder, filepath)
-        
         if os.path.exists(full_path):
             os.remove(full_path)
             return True
-        else:
-            return False
-    
+        return False
+
     except Exception as e:
         print(f"Error deleting file {filepath}: {str(e)}")
         return False
 
 
 def save_multiple_files(files, folder='general'):
-    """
-    Save multiple uploaded files
-    
-    Args:
-        files: List of FileStorage objects
-        folder: Subfolder name
-        
-    Returns:
-        list: List of (success, filepath_or_error) tuples
-    """
-    results = []
-    
-    for file in files:
-        result = save_uploaded_file(file, folder)
-        results.append(result)
-    
-    return results
+    """Save multiple uploaded files. Returns a list of (success, value) tuples."""
+    return [save_uploaded_file(file, folder) for file in files]
 
 
 def get_file_url(filepath):
-    """
-    Generate URL for accessing uploaded file
-    
-    Args:
-        filepath: Relative path to file
-        
-    Returns:
-        str: URL to access file
-    """
-    # In production, this would return CDN or cloud storage URL
-    # For now, return local development URL
+    """Full URLs (Cloudinary) pass through; local paths get the /uploads/ prefix."""
+    if filepath and filepath.startswith('http'):
+        return filepath
     return f"/uploads/{filepath}"

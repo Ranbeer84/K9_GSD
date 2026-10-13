@@ -3,14 +3,50 @@ Email Service
 Handles sending email notifications for bookings and other events
 """
 
+import os
 import smtplib
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import current_app
 from datetime import datetime
 
 
+def _send_via_brevo(to_email, subject, html_body, plain_body=None):
+    """Send through Brevo's HTTPS API (works on hosts that block SMTP ports)."""
+    sender_email = os.getenv('BREVO_SENDER_EMAIL') or current_app.config['MAIL_DEFAULT_SENDER']
+    payload = {
+        'sender': {'name': 'K9 GSD Kennel', 'email': sender_email},
+        'to': [{'email': to_email}],
+        'subject': subject,
+        'htmlContent': html_body,
+    }
+    if plain_body:
+        payload['textContent'] = plain_body
+    try:
+        resp = requests.post(
+            'https://api.brevo.com/v3/smtp/email',
+            headers={'api-key': os.getenv('BREVO_API_KEY'), 'accept': 'application/json'},
+            json=payload,
+            timeout=10,
+        )
+        if resp.status_code in (200, 201, 202):
+            return True, 'Email sent successfully'
+        print(f"Brevo error {resp.status_code}: {resp.text[:200]}")
+        return False, f'Failed to send email (Brevo {resp.status_code})'
+    except Exception as e:
+        print(f"Error sending email via Brevo: {str(e)}")
+        return False, f'Failed to send email: {str(e)}'
+
+
 def send_email(to_email, subject, html_body, plain_body=None):
+    """Use Brevo if BREVO_API_KEY is set (production), otherwise plain SMTP (local)."""
+    if os.getenv('BREVO_API_KEY'):
+        return _send_via_brevo(to_email, subject, html_body, plain_body)
+    return _send_via_smtp(to_email, subject, html_body, plain_body)
+
+
+def _send_via_smtp(to_email, subject, html_body, plain_body=None):
     """
     Send email via SMTP
     

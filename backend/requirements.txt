@@ -28,3 +28,7 @@ typing_extensions==4.12.2
 
 # Production Server
 gunicorn==23.0.0
+
+# Cloud image storage + HTTP email
+cloudinary>=1.40
+requests>=2.31

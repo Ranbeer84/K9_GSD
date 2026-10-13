@@ -23,7 +23,17 @@ class Config:
     DB_PORT = os.getenv('DB_PORT', '5432')
     DB_NAME = os.getenv('DB_NAME', 'k9_gsd_kennel')  # UPDATED to match actual DB
     
-    SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    # Hosted databases (Neon, Render...) give ONE connection string: DATABASE_URL.
+    # If it is set we use it; otherwise we fall back to the DB_* pieces above.
+    _db_url = os.getenv('DATABASE_URL')
+    if _db_url:
+        if _db_url.startswith('postgres://'):  # SQLAlchemy needs "postgresql://"
+            _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+        SQLALCHEMY_DATABASE_URI = _db_url
+    else:
+        SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    # Neon puts the database to sleep when idle; these avoid "connection closed" errors
+    SQLALCHEMY_ENGINE_OPTIONS = {'pool_pre_ping': True, 'pool_recycle': 280}
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False  # Keep it clean
     
@@ -39,7 +49,7 @@ class Config:
     ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'mov', 'avi', 'webm'}
     
     # CORS settings
-    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173').split(',')
+    CORS_ORIGINS = [o.strip().rstrip('/') for o in os.getenv('CORS_ORIGINS', 'http://localhost:5173').split(',') if o.strip()]
     
     # Email settings (for booking notifications)
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
