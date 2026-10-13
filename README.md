@@ -2,9 +2,22 @@
 
 A full-stack website and management system for a German Shepherd (GSD) kennel. Visitors can browse available puppies, meet the breeding dogs, view a photo/video gallery, and send booking enquiries. The kennel owner manages everything from a secure admin panel.
 
+**Live site: [k9-gsd.vercel.app](https://k9-gsd.vercel.app)**
+
+
+| Home | Dashboard |
+| :---: | :---: |
+| ![Home](docs/GSD_home.png) | ![Dash](docs/dash.png) |
+
+| About | Puppies |
+| :---: | :---: |
+| ![About](docs/about.png) | ![Puppies](docs/puppies.png) |
+
+
 ## Features
 
 **Public website**
+
 - Home, About, Our Dogs, Puppies, Gallery and Contact pages
 - Puppy listings with status (Available / Reserved / Sold), photos, price (INR), parentage and personality notes
 - Breeding dog profiles (studs and dams) with pedigree, health clearances and achievements
@@ -12,6 +25,7 @@ A full-stack website and management system for a German Shepherd (GSD) kennel. V
 - Puppy booking / enquiry form with gender preference
 
 **Admin panel**
+
 - JWT-based login and password change
 - Dashboard with summary statistics
 - Create, edit and delete dogs, puppies and gallery items, including multi-image upload and bulk gallery upload
@@ -20,16 +34,17 @@ A full-stack website and management system for a German Shepherd (GSD) kennel. V
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 19, Vite, React Router, Axios, Framer Motion, Lucide icons |
-| Backend | Flask 3, Flask-SQLAlchemy, Flask-JWT-Extended, Flask-CORS, Flask-Mailman |
-| Database | PostgreSQL |
-| Images | Pillow, files stored in `backend/uploads/` |
-| Production server | Gunicorn |
+| Layer             | Technology                                                                |
+| ----------------- | ------------------------------------------------------------------------- |
+| Frontend          | React 19, Vite, React Router, Axios, Framer Motion, Lucide icons          |
+| Backend           | Flask 3, Flask-SQLAlchemy, Flask-JWT-Extended, Flask-CORS, bcrypt         |
+| Database          | PostgreSQL                                                                |
+| Images            | Cloudinary in production, local `backend/uploads/` in development         |
+| Email             | Brevo HTTPS API in production, SMTP (Flask-Mailman) in development        |
+| Production server | Gunicorn                                                                  |
 
 
-## Prerequisites
+## Prerequisites (local development)
 
 - Python 3.10+
 - Node.js 20+
@@ -40,44 +55,56 @@ A full-stack website and management system for a German Shepherd (GSD) kennel. V
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
-cd K9-GSD-Kennel
+git clone https://github.com/Ranbeer84/K9_GSD.git
+cd K9_GSD
 ```
 
 ### 2. Create the database
 
 ```sql
-CREATE USER kennel_admin WITH PASSWORD 'kennel123';
+CREATE USER kennel_admin WITH PASSWORD 'choose-a-password';
 CREATE DATABASE k9_gsd_kennel OWNER kennel_admin;
 ```
 
-> The backend builds its connection string from the `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` and `DB_NAME` variables (defaults: `kennel_admin` / `kennel123` / `localhost` / `5432` / `k9_gsd_kennel`). To use different values, set them in `backend/.env`.
+The backend uses `DATABASE_URL` if it is set. Otherwise it builds the connection from `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` and `DB_NAME`.
 
 ### 3. Configure the backend
 
-Create `backend/.env`:
+Create `backend/.env` (never commit this file):
 
 ```env
-# Database (optional, shown with defaults)
+# Database: either DATABASE_URL ...
+# DATABASE_URL=postgresql://kennel_admin:your-password@localhost:5432/k9_gsd_kennel
+# ... or the separate pieces
 DB_USER=kennel_admin
-DB_PASSWORD=kennel123
+DB_PASSWORD=your-password
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=k9_gsd_kennel
 
 # Security
-JWT_SECRET_KEY=change-this-to-a-long-random-string
+SECRET_KEY=change-this-to-a-long-random-string
+JWT_SECRET_KEY=change-this-to-another-long-random-string
+
+# Admin account (created on first start)
+ADMIN_PASSWORD=choose-a-strong-password
+ADMIN_EMAIL=you@example.com
 
 # CORS
 CORS_ORIGINS=http://localhost:5173
 
-# Email notifications (optional)
-ADMIN_EMAIL=you@example.com
+# Email, local development only (SMTP)
 MAIL_SERVER=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USE_TLS=True
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
+```
+
+Generate secrets with:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 ### 4. Run the backend
@@ -90,11 +117,9 @@ pip install -r requirements.txt
 python app.py
 ```
 
-On first start the app creates all tables, the upload folders and a default admin account. The API runs at `http://localhost:5002`. Health check: `http://localhost:5002/api/health`.
+On first start the app creates all tables, the upload folders and the admin account. The API runs at `http://localhost:5002`. Health check: `http://localhost:5002/api/health`.
 
 ### 5. Run the frontend
-
-In a second terminal:
 
 ```bash
 cd frontend
@@ -106,86 +131,16 @@ Create `frontend/.env` if it doesn't exist:
 
 ```env
 VITE_API_URL=http://localhost:5002/api
+VITE_FILE_URL=http://localhost:5002
 ```
 
 Open `http://localhost:5173`.
 
 ### 6. Log in to the admin panel
 
-Go to `http://localhost:5173/login`.
+Go to `http://localhost:5173/login` and sign in with username `admin` (or the `ADMIN_EMAIL` address) and the `ADMIN_PASSWORD` from your `.env`.
 
-| Username | Password |
-|---|---|
-| `admin` | `admin123` |
-
-**Change this password immediately after first login** (`POST /api/auth/change-password`).
-
-## Pages
-
-| Route | Description |
-|---|---|
-| `/` | Home |
-| `/puppies` | Puppy listings |
-| `/our-dogs` | Breeding dogs |
-| `/about` | About the kennel |
-| `/gallery` | Photo and video gallery |
-| `/contact` | Booking / contact form |
-| `/login` | Admin login |
-| `/admin/dashboard` | Admin dashboard |
-| `/admin/puppies` | Manage puppies |
-| `/admin/dogs` | Manage dogs |
-| `/admin/gallery` | Manage gallery |
-| `/admin/bookings` | Manage bookings |
-
-
-## Data Model
-
-- **Admin**: username, email, password hash, active flag
-- **Dog**: name, gender, role (Stud / Dam / Both), date of birth, registration number, pedigree, health clearances, achievements, images
-- **Puppy**: name, gender, date of birth, colour, weight, microchip number, sire and dam (linked to Dog), price (INR), status, description, personality, health notes, images, featured flag
-- **Gallery**: title, description, media type (Image / Video), file path, category, display order
-- **Booking**: customer name, email, phone, optional puppy, gender preference, message, status (New, Contacted, In Progress, ...), admin notes
-
-See `docs/er-diagram.md` and `docs/schema.sql` for the full schema.
-
-## Utility Scripts
-
-Run these from `backend/` with the virtual environment active.
-
-| Script | Purpose |
-|---|---|
-| `init_db.py` | **Destructive.** Drops the whole `public` schema, recreates all tables and resets the admin account. Only use for a clean reset. |
-| `check_database.py` | Prints database contents and structure for debugging |
-| `diagnose_gallery.py` | Diagnoses gallery and upload issues |
-
-## Building for Production
-
-```bash
-# Frontend
-cd frontend
-npm run build          # outputs to frontend/dist
-
-# Backend
-cd backend
-gunicorn -w 4 -b 0.0.0.0:5002 "app:create_app()"
-```
-
-Before deploying:
-- Set a strong, unique `JWT_SECRET_KEY` and database password
-- Change the default admin password
-- Restrict CORS in `backend/app.py` (currently allows all origins)
-- Set `VITE_API_URL` to your production API URL before building the frontend
-- Serve `backend/uploads/` and the built frontend through a reverse proxy such as Nginx
-- Never commit `.env` files
-
-## Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| `password authentication failed` or `database does not exist` | Check the `DB_*` values in `backend/.env` match the database you created |
-| Frontend can't reach the API | Confirm the backend is running on port 5002 and `VITE_API_URL` is correct, then restart `npm run dev` |
-| Images not showing | Make sure the backend is running (it serves `/uploads`) and the files exist in `backend/uploads/` |
-| Booking emails not sent | Set `MAIL_USERNAME` and `MAIL_PASSWORD` (use an app password for Gmail). Test with `POST /api/bookings/admin/test-email` |
+> If `ADMIN_PASSWORD` is not set, the app falls back to an insecure default and logs a warning. Always set it.
 
 ## License
 

@@ -188,6 +188,5 @@ CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings
 
 -- ============================================
 -- INITIAL ADMIN SEED (Run after table creation)
--- Password: 'admin123' - CHANGE IN PRODUCTION!
 -- ============================================
 -- This will be handled by the application initialization script
