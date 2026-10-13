@@ -51,7 +51,7 @@ def init_db(app):
                 # Create default admin using set_password method
                 default_admin = Admin(
                     username='admin',
-                    email='admin@k9kennel.com',
+                    email=os.getenv('ADMIN_EMAIL') or 'admin@k9kennel.com',
                     full_name='System Administrator',
                     is_active=True
                 )
@@ -76,6 +76,15 @@ def init_db(app):
                 logger.info("   Password: (from ADMIN_PASSWORD in .env)")
                 logger.info("=" * 60)
             else:
+                # Optional one-time reset: set RESET_ADMIN_PASSWORD=true on the host,
+                # redeploy, log in, then REMOVE the variable again.
+                if os.getenv('RESET_ADMIN_PASSWORD', '').lower() == 'true' and os.getenv('ADMIN_PASSWORD'):
+                    admin.set_password(os.getenv('ADMIN_PASSWORD'))
+                    if os.getenv('ADMIN_EMAIL'):
+                        admin.email = os.getenv('ADMIN_EMAIL')
+                    admin.is_active = True
+                    db.session.commit()
+                    logger.warning("Admin password/email reset from environment variables")
                 logger.info(f"ℹ️  Admin user '{admin.username}' already exists")
                 logger.info(f"   Email: {admin.email}")
                 logger.info(f"   Active: {admin.is_active}")
