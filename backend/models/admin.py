@@ -7,7 +7,7 @@ from database import db
 from datetime import datetime
 from sqlalchemy import CheckConstraint
 
-from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
 
 class Admin(db.Model):
     __tablename__ = 'admins'
@@ -63,9 +63,16 @@ class Admin(db.Model):
         return f'<Admin {self.username}>'
     
     def set_password(self, password):
-        """Creates a secure hash of the password"""
-        self.password_hash = generate_password_hash(password)
+        """Hash with bcrypt (same format auth_service.verify_password expects)"""
+        self.password_hash = bcrypt.hashpw(
+            password.encode('utf-8'), bcrypt.gensalt(rounds=12)
+        ).decode('utf-8')
 
     def check_password(self, password):
-        """Verifies the password against the stored hash"""
-        return check_password_hash(self.password_hash, password)
+        """Verify against the bcrypt hash"""
+        try:
+            return bcrypt.checkpw(
+                password.encode('utf-8'), self.password_hash.encode('utf-8')
+            )
+        except (ValueError, AttributeError):
+            return False
