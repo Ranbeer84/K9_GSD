@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 import Button from "../components/common/Button";
 import { testimonials } from "../data/testimonials";
+import { useIsMobile } from "../hooks/useMediaQuery";
 
 const Home = () => {
   const navigate = useNavigate();
-  const isMobile =
-    typeof window !== "undefined" ? window.innerWidth <= 768 : false;
+  const isMobile = useIsMobile(768);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
@@ -26,7 +26,7 @@ const Home = () => {
         style={{
           position: "relative",
           height: isMobile ? "auto" : "100vh",
-          minHeight: "800px",
+          minHeight: isMobile ? "auto" : "800px",
           display: "flex",
           alignItems: "center",
           overflow: "hidden",
@@ -162,7 +162,7 @@ const Home = () => {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
               gap: "24px",
             }}
           >
@@ -234,7 +234,7 @@ const Home = () => {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 350px), 1fr))",
               gap: "32px",
             }}
           >
@@ -344,7 +344,7 @@ const Home = () => {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
               gap: "24px",
             }}
           >

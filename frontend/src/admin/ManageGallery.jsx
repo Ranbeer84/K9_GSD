@@ -704,7 +704,7 @@ const ManageGallery = () => {
 
         .preview-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
           gap: 16px;
           margin-bottom: 24px;
         }
@@ -831,7 +831,7 @@ const ManageGallery = () => {
         /* Gallery Grid */
         .gallery-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
           gap: 24px;
         }
 
@@ -940,7 +940,7 @@ const ManageGallery = () => {
           }
 
           .preview-grid {
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 120px), 1fr));
           }
 
           .gallery-grid {

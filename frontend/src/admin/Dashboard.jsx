@@ -260,7 +260,7 @@ const Dashboard = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
             gap: "20px",
             marginBottom: "60px",
           }}
@@ -371,7 +371,7 @@ const Dashboard = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
             gap: "20px",
           }}
         >
@@ -466,7 +466,7 @@ const Dashboard = () => {
           >
             <BarChart3 size={40} color="var(--primary-from)" />
           </div>
-          <div style={{ flex: 1, minWidth: "300px" }}>
+          <div style={{ flex: 1, minWidth: "min(100%, 300px)" }}>
             <h3
               style={{
                 color: "#fff",

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield, Heart, Award, Loader } from "lucide-react";
 import { dogsAPI, getImageURL } from "../api/api";
+import { useIsMobile } from "../hooks/useMediaQuery";
 
 const OurDogs = () => {
   const [dogs, setDogs] = useState([]);
@@ -10,8 +11,7 @@ const OurDogs = () => {
   const [hoveredId, setHoveredId] = useState(null);
 
   // Responsive check
-  const isMobile =
-    typeof window !== "undefined" ? window.innerWidth <= 768 : false;
+  const isMobile = useIsMobile(768);
 
   // Fetch dogs from backend on component mount
   useEffect(() => {

@@ -78,7 +78,14 @@ html {
   overflow-x: hidden;
 }
 
+img,
+video,
+svg {
+  max-width: 100%;
+}
+
 body {
+  -webkit-text-size-adjust: 100%;
   font-family: "Outfit", sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -118,6 +125,7 @@ h3 {
 p {
   font-size: 1.1rem;
   color: var(--text-secondary);
+  overflow-wrap: anywhere;
 }
 
 /* ===================================
@@ -273,6 +281,8 @@ select {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
   transition: var(--transition-normal);
 }
 
@@ -315,5 +325,79 @@ input:focus {
   }
   .glass-card:hover {
     transform: translateY(-5px);
+  }
+}
+
+
+/* ===================================
+   Mobile & touch refinements
+   ================================== */
+
+/* iOS Safari zooms into any focused field under 16px - including inline-styled
+   admin inputs - so force it on touch-size screens. */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+
+  .glass-card {
+    padding: 20px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* Phones */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .section-padding {
+    padding: 48px 0;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 10vw, 2.75rem);
+  }
+  h2 {
+    font-size: clamp(1.6rem, 8vw, 2.25rem);
+  }
+  h3 {
+    font-size: clamp(1.25rem, 6vw, 1.75rem);
+  }
+
+  /* Large decorative footer spacing is too generous on small screens */
+  footer {
+    padding: 48px 0 32px !important;
+    margin-top: 48px !important;
+  }
+}
+
+/* Touch devices have no hover: don't leave cards "stuck" lifted after a tap */
+@media (hover: none) {
+  .glass-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .glass-card:hover::before {
+    left: -100%;
+  }
+}
+
+/* Respect users who ask for less motion (also saves battery on phones) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -14,17 +14,34 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import Button from "../common/Button";
+import { useIsMobile } from "../../hooks/useMediaQuery";
+import logoImg from "../../assets/IMG_2353.PNG";
 
 const Navbar = ({ isAdmin, onLogout }) => {
   const [scrollY, setScrollY] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const isMobile = useIsMobile(768);
+  const navHeight = isMobile ? 68 : 80;
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Close the drawer on navigation, and when switching to desktop layout
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname, isMobile]);
+
+  // Prevent the page behind the drawer from scrolling
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
 
   const publicNavItems = [
     { path: "/", icon: Home, label: "Home" },
@@ -54,7 +71,8 @@ const Navbar = ({ isAdmin, onLogout }) => {
         style={{
           position: "fixed",
           top: 0,
-          width: "100%",
+          left: 0,
+          right: 0,
           zIndex: 1000,
           transition: "all 0.3s ease",
         }}
@@ -74,21 +92,22 @@ const Navbar = ({ isAdmin, onLogout }) => {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                height: "80px",
+                height: `${navHeight}px`,
               }}
             >
               {/* Logo Section */}
               <Link to="/" style={{ textDecoration: "none" }}>
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "16px" }}
+                  style={{ display: "flex", alignItems: "center", gap: isMobile ? "10px" : "16px" }}
                 >
                   <motion.div
                     whileHover={{ scale: 1.05, rotate: 5 }}
                     transition={{ type: "spring", stiffness: 300 }}
                     style={{
                       position: "relative",
-                      width: "63px",
-                      height: "63px",
+                      width: isMobile ? "46px" : "63px",
+                      height: isMobile ? "46px" : "63px",
+                      flexShrink: 0,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -101,7 +120,7 @@ const Navbar = ({ isAdmin, onLogout }) => {
                     }}
                   >
                     <img
-                      src="/src/assets/IMG_2353.PNG"
+                      src={logoImg}
                       alt="K9 GSD Logo"
                       style={{
                         width: "100%",
@@ -121,7 +140,7 @@ const Navbar = ({ isAdmin, onLogout }) => {
                   <div>
                     <h1
                       style={{
-                        fontSize: "1.75rem",
+                        fontSize: isMobile ? "1.35rem" : "1.75rem",
                         fontWeight: "900",
                         margin: 0,
                         letterSpacing: "1px",
@@ -135,11 +154,12 @@ const Navbar = ({ isAdmin, onLogout }) => {
                     </h1>
                     <p
                       style={{
-                        fontSize: "0.75rem",
+                        fontSize: isMobile ? "0.6rem" : "0.75rem",
                         color: "#94a3b8",
                         margin: 0,
                         fontWeight: "700",
-                        letterSpacing: "2px",
+                        letterSpacing: isMobile ? "1px" : "2px",
+                        whiteSpace: "nowrap",
                         textTransform: "uppercase",
                         fontFamily: "'Outfit', sans-serif",
                       }}
@@ -153,7 +173,7 @@ const Navbar = ({ isAdmin, onLogout }) => {
               {/* Desktop Navigation */}
               <div
                 style={{
-                  display: window.innerWidth > 768 ? "flex" : "none",
+                  display: isMobile ? "none" : "flex",
                   gap: "8px",
                   alignItems: "center",
                 }}
@@ -216,12 +236,15 @@ const Navbar = ({ isAdmin, onLogout }) => {
               {/* Mobile Menu Button */}
               <motion.button
                 whileTap={{ scale: 0.9 }}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileMenuOpen}
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 style={{
-                  display: window.innerWidth <= 768 ? "flex" : "none",
+                  display: isMobile ? "flex" : "none",
                   alignItems: "center",
                   justifyContent: "center",
-                  padding: "12px",
+                  flexShrink: 0,
+                  padding: "10px",
                   background: "rgba(16, 185, 129, 0.15)",
                   border: "1px solid rgba(16, 185, 129, 0.3)",
                   borderRadius: "12px",
@@ -246,17 +269,18 @@ const Navbar = ({ isAdmin, onLogout }) => {
             transition={{ type: "spring", damping: 25 }}
             style={{
               position: "fixed",
-              top: 80,
+              top: navHeight,
               right: 0,
+              bottom: 0,
               width: "100%",
               maxWidth: "400px",
-              height: "calc(100vh - 80px)",
               background: "rgba(5, 8, 7, 0.95)",
               backdropFilter: "blur(24px)",
               borderLeft: "1px solid rgba(255, 255, 255, 0.08)",
               zIndex: 999,
-              padding: "32px 24px",
+              padding: "24px 16px calc(24px + env(safe-area-inset-bottom))",
               overflowY: "auto",
+              overscrollBehavior: "contain",
             }}
           >
             {navItems.map((item, index) => (
@@ -274,8 +298,8 @@ const Navbar = ({ isAdmin, onLogout }) => {
                     display: "flex",
                     alignItems: "center",
                     gap: "16px",
-                    padding: "20px",
-                    marginBottom: "12px",
+                    padding: "16px 20px",
+                    marginBottom: "10px",
                     background: isActive(item.path)
                       ? "linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)"
                       : "rgba(255, 255, 255, 0.03)",

@@ -288,7 +288,7 @@ const BookingModal = ({ booking, onClose, onUpdate }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
             gap: "14px",
             marginBottom: "24px",
           }}
@@ -791,7 +791,7 @@ const ManageBookings = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
             gap: "16px",
             marginBottom: "40px",
           }}
@@ -836,7 +836,7 @@ const ManageBookings = () => {
           <div
             style={{
               flex: 1,
-              minWidth: "220px",
+              minWidth: "min(100%, 220px)",
               position: "relative",
             }}
           >

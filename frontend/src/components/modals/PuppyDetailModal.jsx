@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 import Button from "../common/Button";
 import { getImageURL } from "../../api/api";
+import { useIsMobile } from "../../hooks/useMediaQuery";
 
 const PuppyDetailModal = ({ puppy, onClose }) => {
+  const isMobile = useIsMobile(768); // must run before any early return
   if (!puppy) return null;
 
   // Get images from backend or use placeholders
@@ -60,7 +62,7 @@ const PuppyDetailModal = ({ puppy, onClose }) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "20px",
+          padding: isMobile ? "12px" : "20px",
         }}
         onClick={onClose}
       >
@@ -73,13 +75,14 @@ const PuppyDetailModal = ({ puppy, onClose }) => {
           style={{
             maxWidth: "1100px",
             width: "100%",
-            maxHeight: "90vh",
+            maxHeight: "92vh",
             overflowY: "auto",
+            overscrollBehavior: "contain",
             position: "relative",
             padding: 0,
             background: "var(--bg-secondary)",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "32px",
+            borderRadius: isMobile ? "20px" : "32px",
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -88,10 +91,10 @@ const PuppyDetailModal = ({ puppy, onClose }) => {
             onClick={onClose}
             style={{
               position: "absolute",
-              top: "24px",
-              right: "24px",
-              width: "48px",
-              height: "48px",
+              top: isMobile ? "12px" : "24px",
+              right: isMobile ? "12px" : "24px",
+              width: isMobile ? "40px" : "48px",
+              height: isMobile ? "40px" : "48px",
               borderRadius: "50%",
               background: "rgba(5, 8, 7, 0.8)",
               backdropFilter: "blur(16px)",
@@ -118,14 +121,14 @@ const PuppyDetailModal = ({ puppy, onClose }) => {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: window.innerWidth > 768 ? "1fr 1fr" : "1fr",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
             }}
           >
             {/* Image Section */}
             <div
               style={{
                 position: "relative",
-                height: window.innerWidth > 768 ? "auto" : "400px",
+                height: isMobile ? "min(60vw, 320px)" : "auto",
                 background: "#000",
               }}
             >
@@ -141,7 +144,7 @@ const PuppyDetailModal = ({ puppy, onClose }) => {
             </div>
 
             {/* Details Section */}
-            <div style={{ padding: window.innerWidth > 768 ? "60px" : "32px" }}>
+            <div style={{ padding: isMobile ? "24px 20px" : "60px" }}>
               <div style={{ marginBottom: "32px" }}>
                 <span
                   style={{
@@ -181,7 +184,7 @@ const PuppyDetailModal = ({ puppy, onClose }) => {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))",
                   gap: "16px",
                   marginBottom: "32px",
                 }}
@@ -379,7 +382,7 @@ const PuppyDetailModal = ({ puppy, onClose }) => {
                 style={{
                   display: "flex",
                   gap: "16px",
-                  flexDirection: window.innerWidth > 768 ? "row" : "column",
+                  flexDirection: isMobile ? "column" : "row",
                   marginBottom: "40px",
                 }}
               >
@@ -477,7 +480,7 @@ const PuppyDetailModal = ({ puppy, onClose }) => {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 200px), 1fr))",
                   gap: "20px",
                 }}
               >

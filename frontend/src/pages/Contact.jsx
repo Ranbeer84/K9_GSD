@@ -10,10 +10,10 @@ import {
   Zap,
 } from "lucide-react";
 import BookingForm from "../components/common/BookingForm";
+import { useIsMobile } from "../hooks/useMediaQuery";
 
 const Contact = () => {
-  const isMobile =
-    typeof window !== "undefined" ? window.innerWidth <= 768 : false;
+  const isMobile = useIsMobile(768);
 
   const handleBookingSuccess = () => {
     // You could replace this with a more elegant modal later
