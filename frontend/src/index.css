@@ -383,12 +383,6 @@ input:focus {
   h3 {
     font-size: clamp(1.25rem, 6vw, 1.75rem);
   }
-
-  /* Large decorative footer spacing is too generous on small screens */
-  footer {
-    padding: 48px 0 32px !important;
-    margin-top: 48px !important;
-  }
 }
 
 /* Touch devices have no hover: don't leave cards "stuck" lifted after a tap */

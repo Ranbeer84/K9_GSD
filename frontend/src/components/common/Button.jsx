@@ -11,6 +11,7 @@ const Button = ({
   fullWidth = false,
   disabled = false,
   type = 'button',
+  style: customStyle,
   ...props 
 }) => {
   const baseStyles = {
@@ -19,6 +20,10 @@ const Button = ({
     justifyContent: 'center',
     gap: '10px',
     fontWeight: 'bold',
+    whiteSpace: 'nowrap',
+    minHeight: '44px', // comfortable touch target
+    maxWidth: '100%',
+    textDecoration: 'none',
     borderRadius: '16px',
     cursor: disabled ? 'not-allowed' : 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -69,6 +74,7 @@ const Button = ({
     ...baseStyles,
     ...variants[variant],
     ...sizes[size],
+    ...customStyle,
   };
 
   const hoverStyle = {

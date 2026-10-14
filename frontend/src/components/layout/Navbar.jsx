@@ -226,7 +226,7 @@ const Navbar = ({ isAdmin, onLogout }) => {
                     Logout
                   </Button>
                 ) : (
-                  <Link to="/login">
+                  <Link to="/login" style={{ textDecoration: "none" }}>
                     <Button variant="glass" size="sm">
                       Admin
                     </Button>
@@ -334,7 +334,11 @@ const Navbar = ({ isAdmin, onLogout }) => {
                 Logout
               </Button>
             ) : (
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ display: "block", textDecoration: "none" }}
+              >
                 <Button
                   variant="primary"
                   fullWidth

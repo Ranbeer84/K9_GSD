@@ -2,9 +2,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Facebook, Instagram, Twitter, Heart } from "lucide-react";
+import { useIsMobile } from "../../hooks/useMediaQuery";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const isMobile = useIsMobile(768);
 
   return (
     <footer
@@ -13,8 +15,8 @@ const Footer = () => {
           "linear-gradient(180deg, rgba(5, 8, 7, 0.8) 0%, rgba(5, 8, 7, 0.95) 100%)",
         backdropFilter: "blur(24px)",
         borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-        padding: "80px 0 40px",
-        marginTop: "100px",
+        padding: isMobile ? "36px 0 24px" : "80px 0 40px",
+        marginTop: isMobile ? "48px" : "100px",
       }}
     >
       <div className="container">
@@ -22,19 +24,21 @@ const Footer = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))",
-            gap: "48px",
-            marginBottom: "60px",
+            gridTemplateColumns: isMobile
+              ? "1fr 1fr"
+              : "repeat(auto-fit, minmax(min(100%, 250px), 1fr))",
+            gap: isMobile ? "28px 20px" : "48px",
+            marginBottom: isMobile ? "28px" : "60px",
           }}
         >
           {/* About Column */}
-          <div>
+          <div style={{ gridColumn: isMobile ? "1 / -1" : "auto" }}>
             <h3
               className="gradient-text"
               style={{
-                fontSize: "1.75rem",
+                fontSize: isMobile ? "1.35rem" : "1.75rem",
                 fontWeight: "bold",
-                marginBottom: "20px",
+                marginBottom: isMobile ? "12px" : "20px",
               }}
             >
               K9 GSD KENNEL
@@ -43,8 +47,8 @@ const Footer = () => {
               style={{
                 color: "var(--text-muted)",
                 lineHeight: 1.7,
-                marginBottom: "24px",
-                fontSize: "0.95rem",
+                marginBottom: isMobile ? "16px" : "24px",
+                fontSize: isMobile ? "0.9rem" : "0.95rem",
               }}
             >
               Providing Ranchi with the finest German Shepherd bloodlines since
@@ -80,9 +84,9 @@ const Footer = () => {
             <h4
               style={{
                 color: "var(--text-primary)",
-                fontSize: "1.2rem",
+                fontSize: isMobile ? "1.05rem" : "1.2rem",
                 fontWeight: "bold",
-                marginBottom: "24px",
+                marginBottom: isMobile ? "14px" : "24px",
               }}
             >
               Quick Links
@@ -95,7 +99,7 @@ const Footer = () => {
                   style={{
                     display: "block",
                     color: "var(--text-muted)",
-                    marginBottom: "12px",
+                    marginBottom: isMobile ? "8px" : "12px",
                     textDecoration: "none",
                     transition: "all 0.3s ease",
                     fontSize: "0.95rem",
@@ -120,16 +124,16 @@ const Footer = () => {
             <h4
               style={{
                 color: "var(--text-primary)",
-                fontSize: "1.2rem",
+                fontSize: isMobile ? "1.05rem" : "1.2rem",
                 fontWeight: "bold",
-                marginBottom: "24px",
+                marginBottom: isMobile ? "14px" : "24px",
               }}
             >
               Contact Us
             </h4>
-            <div style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
-              <p style={{ marginBottom: "12px" }}>Ranchi, Jharkhand</p>
-              <p style={{ marginBottom: "12px" }}>
+            <div style={{ color: "var(--text-muted)", fontSize: isMobile ? "0.9rem" : "0.95rem", minWidth: 0 }}>
+              <p style={{ marginBottom: isMobile ? "8px" : "12px", overflowWrap: "anywhere" }}>Ranchi, Jharkhand</p>
+              <p style={{ marginBottom: isMobile ? "8px" : "12px", overflowWrap: "anywhere" }}>
                 <a
                   href="tel:+916201024665"
                   style={{ color: "inherit", textDecoration: "none" }}
@@ -137,7 +141,7 @@ const Footer = () => {
                   +91 6201024665
                 </a>
               </p>
-              <p style={{ marginBottom: "12px" }}>
+              <p style={{ marginBottom: isMobile ? "8px" : "12px", overflowWrap: "anywhere" }}>
                 <a
                   href="mailto:ranbeersinghcauhan@gmail.com"
                   style={{ color: "inherit", textDecoration: "none" }}
@@ -153,18 +157,19 @@ const Footer = () => {
         <div
           style={{
             borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-            paddingTop: "32px",
+            paddingTop: isMobile ? "20px" : "32px",
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: isMobile ? "center" : "space-between",
+            textAlign: isMobile ? "center" : "left",
             alignItems: "center",
             flexWrap: "wrap",
-            gap: "16px",
+            gap: isMobile ? "8px" : "16px",
           }}
         >
           <p
             style={{
               color: "var(--text-muted)",
-              fontSize: "0.9rem",
+              fontSize: isMobile ? "0.8rem" : "0.9rem",
               margin: 0,
             }}
           >
@@ -173,7 +178,7 @@ const Footer = () => {
           <p
             style={{
               color: "var(--text-muted)",
-              fontSize: "0.9rem",
+              fontSize: isMobile ? "0.8rem" : "0.9rem",
               margin: 0,
               display: "flex",
               alignItems: "center",
