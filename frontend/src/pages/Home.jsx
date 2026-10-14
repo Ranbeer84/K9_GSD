@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,10 +14,54 @@ import {
 import Button from "../components/common/Button";
 import { testimonials } from "../data/testimonials";
 import { useIsMobile } from "../hooks/useMediaQuery";
+import { puppiesAPI } from "../api/api";
 
 const Home = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile(768);
+  const [availableCount, setAvailableCount] = useState(null); // null = loading / unavailable
+  const [portraitFailed, setPortraitFailed] = useState(false);
+
+  // Live count for the hero badge. If the API fails the badge simply stays hidden.
+  useEffect(() => {
+    let cancelled = false;
+    puppiesAPI
+      .getAll({ status: "Available" })
+      .then((data) => {
+        if (!cancelled) setAvailableCount((data.puppies || []).length);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const glassBadge = {
+    position: "absolute",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: isMobile ? "10px 14px" : "14px 20px",
+    background: "rgba(8, 12, 10, 0.72)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
+    borderRadius: "18px",
+    boxShadow: "0 16px 40px rgba(0, 0, 0, 0.45)",
+    zIndex: 3,
+  };
+
+  const badgeIcon = (color) => ({
+    width: isMobile ? "34px" : "42px",
+    height: isMobile ? "34px" : "42px",
+    borderRadius: "12px",
+    background: `${color}26`,
+    border: `1px solid ${color}55`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  });
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
@@ -44,8 +88,19 @@ const Home = () => {
             backgroundImage: "url('/dogs/h3.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            filter: "brightness(0.25) contrast(1.1)",
+            filter: "brightness(0.45) contrast(1.1)",
             zIndex: 0,
+          }}
+        />
+
+        {/* Left-to-right fade: dark behind the text, photo opens up on the right */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(90deg, rgba(3,5,4,0.94) 0%, rgba(3,5,4,0.72) 45%, rgba(3,5,4,0.35) 100%)",
+            zIndex: 1,
           }}
         />
 
@@ -61,6 +116,16 @@ const Home = () => {
         />
 
         <div className="container" style={{ position: "relative", zIndex: 10 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile
+                ? "minmax(0, 1fr)"
+                : "minmax(0, 1.15fr) minmax(0, 0.85fr)",
+              gap: isMobile ? "56px" : "64px",
+              alignItems: "center",
+            }}
+          >
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -101,7 +166,9 @@ const Home = () => {
             {/* Main Heading */}
             <h1
               style={{
-                fontSize: "clamp(3rem, 10vw, 6.5rem)",
+                fontSize: isMobile
+                  ? "clamp(3rem, 10vw, 6.5rem)"
+                  : "clamp(3rem, 5.6vw, 6.25rem)",
                 fontWeight: "900",
                 lineHeight: 0.95,
                 marginBottom: "32px",
@@ -151,6 +218,214 @@ const Home = () => {
               </Button>
             </div>
           </motion.div>
+
+          {/* --- HERO PORTRAIT --- */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: isMobile ? "320px" : "460px",
+              justifySelf: isMobile ? "center" : "end",
+            }}
+          >
+            {/* Emerald glow behind the frame */}
+            <div
+              style={{
+                position: "absolute",
+                inset: "-12%",
+                background:
+                  "radial-gradient(circle, rgba(16,185,129,0.45) 0%, rgba(245,158,11,0.12) 45%, transparent 70%)",
+                filter: "blur(50px)",
+                zIndex: 0,
+              }}
+            />
+
+            {/* Offset outline for depth */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                transform: "translate(16px, 16px)",
+                borderRadius: isMobile
+                  ? "160px 160px 24px 24px"
+                  : "230px 230px 32px 32px",
+                border: "1px solid rgba(16, 185, 129, 0.35)",
+                zIndex: 1,
+              }}
+            />
+
+            {/* Arched photo frame (gently floating) */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "relative",
+                height: isMobile ? "400px" : "min(640px, 72vh)",
+                borderRadius: isMobile
+                  ? "160px 160px 24px 24px"
+                  : "230px 230px 32px 32px",
+                overflow: "hidden",
+                border: "1px solid rgba(245, 158, 11, 0.4)",
+                boxShadow:
+                  "0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(16,185,129,0.18)",
+                background:
+                  "linear-gradient(160deg, rgba(16,185,129,0.15), rgba(8,12,10,1))",
+                zIndex: 2,
+              }}
+            >
+              {portraitFailed ? (
+                <div
+                  style={{
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Shield size={72} color="rgba(16,185,129,0.5)" />
+                </div>
+              ) : (
+                <img
+                  src="/dogs/Main.jpg"
+                  alt="German Shepherd from K9 GSD Kennel"
+                  onError={() => setPortraitFailed(true)}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center top",
+                    display: "block",
+                  }}
+                />
+              )}
+              {/* Soft fade at the bottom so the frame blends into the page */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(180deg, transparent 65%, rgba(3,5,4,0.55) 100%)",
+                  pointerEvents: "none",
+                }}
+              />
+            </motion.div>
+
+            {/* Floating badge: live available puppies */}
+            {availableCount !== null && (
+              <motion.div
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate("/puppies")}
+                onKeyDown={(e) => e.key === "Enter" && navigate("/puppies")}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
+                transition={{
+                  opacity: { delay: 0.9 },
+                  x: { delay: 0.9 },
+                  y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+                }}
+                whileHover={{ scale: 1.04 }}
+                style={{
+                  ...glassBadge,
+                  top: isMobile ? "10%" : "12%",
+                  left: isMobile ? "-8px" : "-48px",
+                  cursor: "pointer",
+                }}
+              >
+                <div style={badgeIcon("#10b981")}>
+                  <Heart size={isMobile ? 16 : 20} color="#10b981" />
+                </div>
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      color: "#fff",
+                      fontWeight: 800,
+                      fontSize: isMobile ? "0.95rem" : "1.1rem",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {availableCount > 0
+                      ? `${availableCount} ${availableCount === 1 ? "Puppy" : "Puppies"}`
+                      : "New Litters"}
+                    <motion.span
+                      animate={{ opacity: [1, 0.3, 1], scale: [1, 1.4, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        background: "#10b981",
+                        display: "inline-block",
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      letterSpacing: "1px",
+                      textTransform: "uppercase",
+                      marginTop: "4px",
+                    }}
+                  >
+                    {availableCount > 0 ? "Available now" : "Coming soon"}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Floating badge: health certified */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0, y: [0, 8, 0] }}
+              transition={{
+                opacity: { delay: 1.1 },
+                x: { delay: 1.1 },
+                y: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+              }}
+              style={{
+                ...glassBadge,
+                bottom: isMobile ? "8%" : "10%",
+                right: isMobile ? "-8px" : "-40px",
+              }}
+            >
+              <div style={badgeIcon("#f59e0b")}>
+                <Shield size={isMobile ? 16 : 20} color="#f59e0b" />
+              </div>
+              <div>
+                <div
+                  style={{
+                    color: "#fff",
+                    fontWeight: 800,
+                    fontSize: isMobile ? "0.95rem" : "1.1rem",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Health Certified
+                </div>
+                <div
+                  style={{
+                    color: "var(--text-muted)",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    letterSpacing: "1px",
+                    textTransform: "uppercase",
+                    marginTop: "4px",
+                  }}
+                >
+                  Pedigree verified
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+          </div>
         </div>
       </section>
 
