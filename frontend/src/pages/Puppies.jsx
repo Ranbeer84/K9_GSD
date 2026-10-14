@@ -117,7 +117,7 @@ const Puppies = ({ isAdmin }) => {
                 fontSize: "0.9rem",
                 cursor: "pointer",
                 textTransform: "uppercase",
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "var(--font-display)",
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >

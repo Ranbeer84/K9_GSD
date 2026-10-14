@@ -25,7 +25,7 @@ const Button = ({
     border: 'none',
     position: 'relative',
     overflow: 'hidden',
-    fontFamily: 'Syne, sans-serif',
+    fontFamily: "var(--font-display)",
     width: fullWidth ? '100%' : 'auto',
     opacity: disabled ? 0.5 : 1,
   };

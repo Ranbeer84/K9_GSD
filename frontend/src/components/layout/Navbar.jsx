@@ -140,10 +140,11 @@ const Navbar = ({ isAdmin, onLogout }) => {
                   <div>
                     <h1
                       style={{
-                        fontSize: isMobile ? "1.35rem" : "1.75rem",
+                        fontFamily: "var(--font-brand)",
+                        fontSize: isMobile ? "1.3rem" : "1.7rem",
                         fontWeight: "900",
                         margin: 0,
-                        letterSpacing: "1px",
+                        letterSpacing: "2px",
                         background:
                           "linear-gradient(to bottom, #F3D06A 0%, #9C7045 100%)",
                         WebkitBackgroundClip: "text",
@@ -161,7 +162,7 @@ const Navbar = ({ isAdmin, onLogout }) => {
                         letterSpacing: isMobile ? "1px" : "2px",
                         whiteSpace: "nowrap",
                         textTransform: "uppercase",
-                        fontFamily: "'Outfit', sans-serif",
+                        fontFamily: "var(--font-body)",
                       }}
                     >
                       {isAdmin ? "ADMIN PANEL" : "PREMIUM KENNEL • RANCHI"}
@@ -206,7 +207,7 @@ const Navbar = ({ isAdmin, onLogout }) => {
                         fontSize: "0.95rem",
                         cursor: "pointer",
                         transition: "all 0.3s ease",
-                        fontFamily: "Syne, sans-serif",
+                        fontFamily: "var(--font-display)",
                       }}
                     >
                       <item.icon size={18} />
