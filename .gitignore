@@ -25,6 +25,8 @@ frontend/public/puppies/*
 # --- Exceptions (Keep these UI images) ---
 !frontend/public/dogs/About.jpg
 !frontend/public/dogs/Home.jpg
+!frontend/public/dogs/Main.jpg
+!frontend/public/dogs/h3.jpg
 
 # --- General ---
 node_modules/
